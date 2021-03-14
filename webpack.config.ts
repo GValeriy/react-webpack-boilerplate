@@ -2,25 +2,37 @@ const webpack = require('webpack');
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const KILOBYTE = 1024;
 
 const config = {
     entry: {
-        bundle: './src/index.js',
+        bundle: './src/index.tsx',
     },
     output: {
         path: path.resolve(__dirname, 'static/build'),
         filename: '[name].[chunkhash].js',
         assetModuleFilename: 'images/[hash][ext][query]'
     },
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+      },
+    },
     mode: isDevelopment ? 'development' : 'production',
     module: {
         rules: [
             {
                 use: 'babel-loader',
-                test: /\.js$/
+                test: /\.(js|jsx)$/,
+                exclude: /node_modules/
+            },
+            {
+                use: 'ts-loader',
+                test: /\.(ts|tsx)$/,
+                exclude: /node_modules/
             },
             {
                 use: [
@@ -53,6 +65,9 @@ const config = {
               },
         ]
     },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
+    },
     devtool: 'inline-source-map',
     devServer: {
         contentBase: false,
@@ -60,14 +75,20 @@ const config = {
         port: 3000
     },
     plugins: [
+        new CleanWebpackPlugin(),
         new MiniCssExtractPlugin({ filename: 'style.css' }),
         new HtmlWebpackPlugin({
-            template: 'static/index.html'
+            template: path.resolve(__dirname, './static/index.html'),
+            filename: 'index.html',
+            title: "React Boilerplate"
         }),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-        })
+        }),
     ],
 };
 
-module.exports = config;
+module.exports = (env) => {
+  console.log('NODE_ENV: ', process.env.NODE_ENV);
+  return config;
+};
